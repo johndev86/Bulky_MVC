@@ -1,5 +1,6 @@
 ﻿using BulkyBook.DataAccess.Repository.IRepository;
 using BulkyBook.Models;
+using BulkyBook.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -16,64 +17,47 @@ namespace BulkyBookWeb.Areas.Admin.Controllers
         public IActionResult Index()
         {
             List<Product> objProductsList = _unitOfWork.Product.GetAll().ToList();
-            IEnumerable<SelectListItem> CategoryList = _unitOfWork.Category.GetAll().Select(i => new SelectListItem(i.Name, i.Id.ToString()));
+
             return View(objProductsList);
         }
 
-        public IActionResult Create()
+        public IActionResult Upsert(int? id)
         {
-            return View();
+
+            ProductVM productVM = new()
+            {
+                CategoryList = _unitOfWork.Category.GetAll().Select(i => new SelectListItem(i.Name, i.Id.ToString())),
+                Product = new Product()
+            };
+
+            if (id == null || id  == 0)
+            {
+                return View(productVM);
+            }
+            else
+            {
+                productVM.Product = _unitOfWork.Product.Get(u => u.Id == id);
+            }
+
+            return View(productVM);
         }
 
         [HttpPost]
-        public IActionResult Create(Product obj)
+        public IActionResult Upsert(ProductVM productVM, IFormFile? file)
         {
-            if (obj.Title == obj.Description.ToString())
-            {
-                ModelState.AddModelError("Title", "Title and description cannot be equal");
-            }
 
             if (ModelState.IsValid)
             {
-                _unitOfWork.Product.Add(obj);
+                _unitOfWork.Product.Add(productVM.Product);
                 _unitOfWork.Save();
                 TempData["success"] = "Product created successfully";
                 return RedirectToAction("Index");
-            }
-            return View();
-        }
-
-        public IActionResult Edit(int? id)
-        {
-            if (id == null || id == 0)
+            } else
             {
-                return NotFound();
-            }
+                productVM.CategoryList = _unitOfWork.Category.GetAll().Select(i => new SelectListItem(i.Name, i.Id.ToString()));
 
-            Product? productFromDb = _unitOfWork.Product.Get(obj => obj.Id == id);
-            if (productFromDb == null)
-            {
-                return NotFound();
+                return View(productVM);
             }
-            return View(productFromDb);
-        }
-
-        [HttpPost]
-        public IActionResult Edit(Product obj)
-        {
-            if (obj.Title == obj.Description.ToString())
-            {
-                ModelState.AddModelError("Title", "Title and description cannot be equal");
-            }
-
-            if (ModelState.IsValid)
-            {
-                _unitOfWork.Product.Update(obj);
-                _unitOfWork.Save();
-                TempData["success"] = "Product updated successfully";
-                return RedirectToAction("Index");
-            }
-            return View();
         }
 
         public IActionResult Delete(int? id)

@@ -27,12 +27,12 @@ namespace BulkyBook.DataAccess.Repository
             dbSet.Add(entity);
         }
 
-        public void Delete(T entity)
+        public void Remove(T entity)
         {
             dbSet.Remove(entity);
         }
 
-        public void DeleteRange(IEnumerable<T> entities)
+        public void RemoveRange(IEnumerable<T> entities)
         {
             dbSet.RemoveRange(entities);
         }

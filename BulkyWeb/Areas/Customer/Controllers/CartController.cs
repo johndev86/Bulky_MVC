@@ -109,7 +109,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
             return View(ShoppingCartVM);
         }
 
-		[HttpPost, ActionName("Delete")]
+		[HttpPost, ActionName("Summary")]
 		public IActionResult SummaryPOST()
         {
 			var claimsIdentity = (ClaimsIdentity)User.Identity;
@@ -117,14 +117,10 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
 
             ShoppingCartVM.ShoppingCartList = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == userId, includeProperties: "Product").ToList();
 
-			ShoppingCartVM.OrderHeader.ApplicationUser = _unitOfWork.ApplicationUser.Get(u => u.Id == userId);
+            ShoppingCartVM.OrderHeader.OrderDate = System.DateTime.Now;
+            ShoppingCartVM.OrderHeader.ApplicationUserId = userId;
 
-			ShoppingCartVM.OrderHeader.Name = ShoppingCartVM.OrderHeader.ApplicationUser.Name;
-			ShoppingCartVM.OrderHeader.PhoneNumber = ShoppingCartVM.OrderHeader.ApplicationUser.PhoneNumber;
-			ShoppingCartVM.OrderHeader.StreetAddress = ShoppingCartVM.OrderHeader.ApplicationUser.StreetAddress;
-			ShoppingCartVM.OrderHeader.City = ShoppingCartVM.OrderHeader.ApplicationUser.City;
-			ShoppingCartVM.OrderHeader.State = ShoppingCartVM.OrderHeader.ApplicationUser.State;
-			ShoppingCartVM.OrderHeader.PostalCode = ShoppingCartVM.OrderHeader.ApplicationUser.PostalCode;
+			ApplicationUser applicationUser = _unitOfWork.ApplicationUser.Get(u => u.Id == userId);
 
 			foreach (var cart in ShoppingCartVM.ShoppingCartList)
 			{
@@ -132,7 +128,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
 				ShoppingCartVM.OrderHeader.OrderTotal += (cart.Price * cart.Count);
 			}
 
-            if (ShoppingCartVM.OrderHeader.ApplicationUser.CompanyId.GetValueOrDefault() == 0)
+            if (applicationUser.CompanyId.GetValueOrDefault() == 0)
             {
                 //regular customer
                 ShoppingCartVM.OrderHeader.PaymentStatus = SD.PaymentStatusPending;
@@ -151,7 +147,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
             {
                 OrderDetail orderDetail = new()
                 {
-                    ProductId = cart.Id,
+                    ProductId = cart.ProductId,
                     OrderHeaderId = ShoppingCartVM.OrderHeader.Id,
                     Price = cart.Price,
                     Count = cart.Count
@@ -160,8 +156,18 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
                 _unitOfWork.Save();
             }
 
-			return View(ShoppingCartVM);
+            if (applicationUser.CompanyId.GetValueOrDefault() == 0)
+            { 
+                //regular customer - payment processing
+            }
+
+            return RedirectToAction("OrderConfirmation", new { id = ShoppingCartVM.OrderHeader.Id });
 		}
+
+        public IActionResult OrderConfirmation(int id)
+        {
+            return View(id);
+        }
 
         private double GetPriceBasedOnQuantity(ShoppingCart shoppingCart)
         {

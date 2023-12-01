@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace BulkyBook.DataAccess.Repository
 {
-    internal class OrderDetailRepository : Repository<OrderDetail>, IOrderDetailRepository
+    public class OrderDetailRepository : Repository<OrderDetail>, IOrderDetailRepository
     {
         private readonly ApplicationDbContext _db;
         public OrderDetailRepository(ApplicationDbContext db) : base(db)

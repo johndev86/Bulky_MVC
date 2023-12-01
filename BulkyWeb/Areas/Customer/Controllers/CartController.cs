@@ -164,11 +164,11 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
 
 				StripeConfiguration.ApiKey = "sk_test_51OIGGSD17qXwMFYyFDZFxfhrWdZYBrLwSm4VjdwPxPWqpkM9Gj22ZO3xfEX125gVb29nhWTeG3hLAoCcAMRdyBuY00gKv7kkE6";
 
-				var domain = "http://localhost:7215/";
+				var domain = "https://localhost:7215/";
 				var options = new SessionCreateOptions
                 {
 					SuccessUrl = domain+$"customer/cart/OrderConfirmation?id={ShoppingCartVM.OrderHeader.Id}",
-                    CancelUrl = domain+"customer/cart/Index",
+                    CancelUrl = domain+"customer/cart/index",
 					LineItems = new List<SessionLineItemOptions>(),
 					Mode = "payment",
 				};
@@ -206,6 +206,27 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
 
         public IActionResult OrderConfirmation(int id)
         {
+            OrderHeader orderHeader = _unitOfWork.OrderHeader.Get(u => u.Id == id, "ApplicationUser");
+
+            if (orderHeader.PaymentStatus != SD.PaymentStatusDelayedPayment)
+            {
+                //order by customer
+                var service = new SessionService();
+
+                Session session = service.Get(orderHeader.SessionId);
+                if (session.PaymentStatus.ToLower() == "paid")
+                {
+                    _unitOfWork.OrderHeader.UpdateStripePaymentID(id, session.Id, session.PaymentIntentId);
+                    _unitOfWork.OrderHeader.UpdateStatus(id, SD.StatusApproved, SD.PaymentStatusApproved);
+                    _unitOfWork.Save();
+                }
+            }
+
+            List<ShoppingCart> shoppingCarts = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == orderHeader.ApplicationUserId).ToList();
+
+            _unitOfWork.ShoppingCart.RemoveRange(shoppingCarts);
+            _unitOfWork.Save();
+
             return View(id);
         }
 

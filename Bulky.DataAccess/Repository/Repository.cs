@@ -43,7 +43,6 @@ namespace BulkyBook.DataAccess.Repository
             if (tracked)
             {
                 query = dbSet;
-                
 
             } else
             {

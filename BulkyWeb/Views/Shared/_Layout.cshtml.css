@@ -13,6 +13,10 @@ a.navbar-brand {
     color: #0077cc;
 }*/
 
+.container {
+    margin-bottom: 60px;
+}
+
 .btn-primary {
     color: #fff;
     background-color: #1b6ec2;
@@ -43,7 +47,7 @@ button.accept-policy {
 }
 
 .footer {
-    position: relative;
+    position: fixed;
     bottom: 0;
     width: 100%;
     white-space: nowrap;

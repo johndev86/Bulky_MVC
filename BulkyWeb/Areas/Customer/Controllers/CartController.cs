@@ -166,7 +166,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
 
 				StripeConfiguration.ApiKey = "sk_test_51OIGGSD17qXwMFYyFDZFxfhrWdZYBrLwSm4VjdwPxPWqpkM9Gj22ZO3xfEX125gVb29nhWTeG3hLAoCcAMRdyBuY00gKv7kkE6";
 
-				var domain = "https://localhost:7215/";
+				var domain = Request.Scheme + "://" + Request.Host.Value + "/";
 				var options = new SessionCreateOptions
                 {
 					SuccessUrl = domain+$"customer/cart/OrderConfirmation?id={ShoppingCartVM.OrderHeader.Id}",
